@@ -5,7 +5,6 @@ services:
     environment:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: root
-      POSTGRES_DB: deltabook
     ports:
       - "54329:5432"
     volumes:
