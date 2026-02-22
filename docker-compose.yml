@@ -1,14 +1,15 @@
 services:
   deltabook-db:
     image: timescale/timescaledb-ha:pg18
+    container_name: deltabook-db
     environment:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: root
-      PGDATA: /pgdata
+      POSTGRES_DB: deltabook
     ports:
       - "54329:5432"
     volumes:
-      - deltabook-db-data:/pg-data
+      - deltabook-db-data:/home/postgres/pgdata
 
 volumes:
   deltabook-db-data:
