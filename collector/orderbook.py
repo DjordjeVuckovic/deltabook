@@ -1,3 +1,6 @@
+from decimal import Decimal
+
+
 class SequenceGapError(Exception):
     def __init__(self, symbol: str, expected: int, got: int):
         self.expected = expected
@@ -12,8 +15,8 @@ class DepthUpdateEvent:
         self.symbol = data["s"]
         self.first_update_id = data["U"]  # first update ID in this diff batch
         self.final_update_id = data["u"]  # last update ID in this diff batch
-        self.bids = data["b"]             # list of [price, qty] bid updates
-        self.asks = data["a"]             # list of [price, qty] ask updates
+        self.bids = data["b"]  # list of [price, qty] bid updates
+        self.asks = data["a"]  # list of [price, qty] ask updates
 
 
 class OrderBook:
@@ -91,7 +94,26 @@ class OrderBook:
         best_ask = self.best_ask()
         if best_bid is None or best_ask is None:
             return None
-        return str(float(best_ask[0]) - float(best_bid[0]))
+        return str(Decimal(best_ask[0]) - Decimal(best_bid[0]))
+
+    def depth_weighted_price(self) -> dict[str, Decimal]:
+        def calc(pqs: dict[str, str]) -> Decimal:
+            t_price = Decimal(0)
+            t_qty = Decimal(0)
+
+            for p, q in pqs.items():
+                t_price += Decimal(p) * Decimal(q)
+                t_qty += Decimal(q)
+
+            if t_qty == 0:
+                return Decimal(0)
+
+            return t_price / t_qty
+
+        return {
+            "ask": calc(self.asks),
+            "bid": calc(self.bids),
+        }
 
     def mid_price(self) -> str | None:
         """Mid-price = (best ask price + best bid price) / 2. Returns None if book is empty."""
@@ -99,8 +121,7 @@ class OrderBook:
         best_ask = self.best_ask()
         if best_bid is None or best_ask is None:
             return None
-        mid = (float(best_ask[0]) + float(best_bid[0])) / 2
-        return str(mid)
+        return str((Decimal(best_ask[0]) + Decimal(best_bid[0])) / 2)
 
     def top_bids(self, n: int = 20) -> list[list[str]]:
         """Top N bid levels sorted highest-first."""

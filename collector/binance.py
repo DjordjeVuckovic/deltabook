@@ -33,7 +33,6 @@ async def collect_binance(storage: OrderBookStorage) -> None:
     await asyncio.gather(*[_run_symbol(storage, sym) for sym in SYMBOLS])
 
 
-
 async def _run_symbol(storage: OrderBookStorage, symbol: str) -> None:
     """
     Opens one persistent WS connection for a symbol.
@@ -58,7 +57,6 @@ async def _run_symbol(storage: OrderBookStorage, symbol: str) -> None:
                         queue.get_nowait()
         finally:
             reader.cancel()
-
 
 
 async def _ws_reader(ws: websockets.asyncio.client.ClientConnection, queue: asyncio.Queue, symbol: str) -> None:
@@ -137,13 +135,13 @@ async def _sync(
             print(f"[{symbol}] saved snapshot at lastUpdateId={event.final_update_id}")
 
 
-
 def _log_bbo(book: OrderBook, symbol: str) -> None:
     bid = book.best_bid()
     ask = book.best_ask()
     spread = book.spread()
     if bid and ask and spread:
-        print(f"[{symbol}] BBO  bid={bid[0]} ({bid[1]})  ask={ask[0]} ({ask[1]})  spread={float(spread):.2f}")
+        print(
+            f"[{symbol}] BBO bid={bid[0]} ({bid[1]})  ask={ask[0]} ({ask[1]})  spread={float(spread):.2f} dwp={book.depth_weighted_price()["ask"]}")
 
 
 async def _fetch_depth_snapshot(symbol: str) -> dict:

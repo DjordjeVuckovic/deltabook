@@ -1,14 +1,11 @@
 -- ============================================================
--- ORDERBOOK QUERY LESSONS
+-- ORDERBOOK QUERY INTRO
 -- schema: orderbook_snapshots(ts, symbol, last_update_id, bids, asks)
 -- bids/asks: JSONB array of [price, qty] pairs, best level first
 --   bids[0] = best bid (highest price)
 --   asks[0] = best ask (lowest price)
 -- ============================================================
 
-
--- ── LESSON 1: Basic reads ────────────────────────────────────────────────────
--- Always start here. Understand your data before doing anything clever.
 
 -- 1a. Most recent 10 snapshots
 SELECT ts, symbol, last_update_id
@@ -30,7 +27,6 @@ FROM orderbook_snapshots
 GROUP BY symbol;
 
 
--- ── LESSON 2: Extracting values from JSONB ───────────────────────────────────
 -- bids and asks are JSONB arrays. You need to know how to reach into them.
 --
 -- Operators:
@@ -55,7 +51,6 @@ ORDER BY ts DESC
 LIMIT 20;
 
 
--- ── LESSON 3: Spread and mid-price ──────────────────────────────────────────
 -- Spread = best_ask - best_bid
 -- This is the MM's gross revenue per round-trip. Wide spread = illiquid.
 --
@@ -87,16 +82,15 @@ GROUP BY symbol;
 
 -- find when that max spread in the last N hours occurred
 SELECT ts,
-     (asks -> 0 ->> 0)::numeric - (bids -> 0 ->> 0)::numeric AS spread,
-     (bids -> 0 ->> 0)::numeric AS best_bid,
-     (asks -> 0 ->> 0)::numeric AS best_ask
+       (asks -> 0 ->> 0)::numeric - (bids -> 0 ->> 0)::numeric AS spread,
+       (bids -> 0 ->> 0)::numeric                              AS best_bid,
+       (asks -> 0 ->> 0)::numeric                              AS best_ask
 FROM orderbook_snapshots
 WHERE symbol = 'BTCUSDT'
-AND ts > NOW() - INTERVAL '2 hour'
-AND (asks -> 0 ->> 0)::numeric - (bids -> 0 ->> 0)::numeric > 1.0
+  AND ts > NOW() - INTERVAL '2 hour'
+  AND (asks -> 0 ->> 0)::numeric - (bids -> 0 ->> 0)::numeric > 1.0
 ORDER BY spread DESC;
 
--- ── LESSON 4: time_bucket — TimescaleDB's GROUP BY time ──────────────────────
 -- time_bucket() is like DATE_TRUNC but designed for time series.
 -- It buckets rows into fixed-size windows: 1 min, 5 min, 1 hour, etc.
 -- This is how you go from tick-level data to OHLC-style aggregates.
